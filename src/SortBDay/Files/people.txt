@@ -1,0 +1,5 @@
+﻿Simba, 23
+Joe, 45
+Mary, 30
+Angela, 16
+Angela, 20
