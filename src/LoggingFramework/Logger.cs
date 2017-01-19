@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using static System.Console;
@@ -11,6 +12,7 @@ namespace LoggingFramework
     {
         private readonly Dictionary<int, List<Level>> _configurations;
         private readonly Level _minimumLevel;
+        private readonly string _logPath;
         // Flag: Has Dispose already been called?
         private bool disposed = false;
         public enum Level
@@ -23,27 +25,33 @@ namespace LoggingFramework
             Error
         }
 
-        public Logger(string filePath, Level level)
+        public Logger(string logPath, Level level)
         {
             _minimumLevel = level;
             _configurations = new Dictionary<int, List<Level>>();
             _configurations.Add((int)Level.Debug, new List<Level> { Level.Debug, Level.Info, Level.Error });
             _configurations.Add((int)Level.Info, new List<Level> { Level.Info, Level.Error });
             _configurations.Add((int)Level.Error, new List<Level> { Level.Error });
-
-
+            _logPath = logPath;
             const string message = "Logger Initialised";
             Log(message);
             AdjustLoggers();
+            InitialiseFileLogger();
         }
 
         private void AdjustLoggers()
         {
             var levelLoggers = _configurations.FirstOrDefault(x => x.Key == (int)_minimumLevel).Value;
-            foreach(var configuration in _configurations)
+            foreach (var configuration in _configurations)
             {
-                configuration.Value.RemoveAll(x => !levelLoggers.Contains(x));  
+                configuration.Value.RemoveAll(x => !levelLoggers.Contains(x));
             }
+        }
+
+        private void InitialiseFileLogger()
+        {
+            if (!File.Exists(_logPath))
+                File.CreateText(_logPath);
         }
 
         public void Debug(string message)
@@ -94,7 +102,10 @@ namespace LoggingFramework
         }
         private void Log(string message)
         {
-            WriteLine($"{DateTime.Now.ToString("yyyy.mm-dd HH:MM:ss")} {message}");
+            using (StreamWriter sw = File.AppendText(_logPath))
+            {
+                sw.WriteLine($"{DateTime.Now.ToString("yyyy.MM.dd HH:mm:ss")} {message}");
+            }
         }
 
     }
